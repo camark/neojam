@@ -78,11 +78,19 @@
     pc += 1;                                                          \
     DISPATCH(pc)                                                      \
 }
-
+// SRC_TYPE v = *--(SRC_TYPE *)ostack;
+// *((DEST_TYPE *)ostack)++ = (DEST_TYPE)v;                          
 #define OPC_X2Y(SRC_TYPE, DEST_TYPE)                                  \
-{                                                                     \
-    SRC_TYPE v = *--(SRC_TYPE *)ostack;                               \
-    *((DEST_TYPE *)ostack)++ = (DEST_TYPE)v;                          \
+  {                                                                   \
+    SRC_TYPE *p = ostack;                                             \
+    p--;                                                              \
+    SRC_TYPE v = *p;                                                  \
+    ostack = p;                                                       \
+    DEST_TYPE *p2 = ostack;                                           \
+    *p2 =  (DEST_TYPE)v;                                              \
+    p2++;                                                             \
+    ostack = p2;                                                      \
+                                                                      \
     pc += 1;                                                          \
     DISPATCH(pc)                                                      \
 }
@@ -163,10 +171,17 @@
     DISPATCH(pc) 		                                      \
 }
 
+ /* TYPE v2 = *--((TYPE *)ostack);                                    \ */
+/* TYPE v1 = *--((TYPE *)ostack);                                    \ */
 #define CMP(TYPE, ostack, pc)                                         \
 {                                                                     \
-    TYPE v2 = *--((TYPE *)ostack);                                    \
-    TYPE v1 = *--((TYPE *)ostack);                                    \
+  TYPE *p = ostack;                                                   \
+  p--;                                                                \
+  TYPE v2 = *p;                                                       \
+  p--;                                                                \
+  TYPE v1 = *p;                                                       \
+  ostack = p;                                                         \
+                                                                      \
     if(v1 == v2)                                                      \
         *ostack++ = 0;                                                \
     else if(v1 < v2)                                                  \
@@ -177,10 +192,17 @@
     DISPATCH(pc)                                                      \
 }
 
+ /* TYPE v2 = *--((TYPE *)ostack);                                    \ */
+ /*    TYPE v1 = *--((TYPE *)ostack); */
+
 #define FCMP(TYPE, ostack, pc, isNan)                                 \
 {                                                                     \
-    TYPE v2 = *--((TYPE *)ostack);                                    \
-    TYPE v1 = *--((TYPE *)ostack);                                    \
+  TYPE *p = ostack;                                                   \
+  p--;                                                                \
+  TYPE v2 = *p;                                                       \
+  p--;                                                                \
+  TYPE v1 = *p;                                                       \
+  ostack = p;                                                         \
     if(v1 == v2)                                                      \
         *ostack++ = 0;                                                \
     else if(v1 < v2)                                                  \
@@ -259,7 +281,12 @@ u4 *executeJava() {
     Class *new_class;
     MethodBlock *new_mb;
     u4 *arg1;
+    u8 *neoU8;
+    u8 *neoU82;
+    float *neoFloat;
+    double *neoDouble;
 
+    
 #ifdef THREADED
     static void *handlers[] = {
         &&opc0, &&opc1, &&opc2, &&opc3, &&opc4, &&opc5, &&opc6, &&opc7, &&opc8, &&opc9, &&opc10,
@@ -350,27 +377,47 @@ unused:
 
     DEF_OPC(OPC_LCONST_0)
     DEF_OPC(OPC_DCONST_0)
-        *((u8*)ostack)++ = 0;
+          neoU8 = (u8 *)ostack;
+        *neoU8 = 0;
+        neoU8++;
+        ostack = (u4 *)neoU8;
+        // *((u8*)ostack)++ = 0;
         pc += 1;
         DISPATCH(pc)
 
     DEF_OPC(OPC_FCONST_1)
-        *((float*)ostack)++ = (float) 1.0;
+          //        *((float*)ostack)++ = (float) 1.0;
+          neoFloat = (float *)ostack;
+        *neoFloat = 1.0;
+        neoFloat++;
+        ostack = (u4 *)neoFloat;
         pc += 1;
         DISPATCH(pc)
 
     DEF_OPC(OPC_FCONST_2)
-        *((float*)ostack)++ = (float) 2.0;
+          //*((float*)ostack)++ = (float) 2.0;
+          neoFloat = (float *)ostack;
+        *neoFloat = 2.0;
+        neoFloat++;
+        ostack = (u4 *)neoFloat;
         pc += 1;
         DISPATCH(pc)
 
     DEF_OPC(OPC_DCONST_1)
-        *((double*)ostack)++ = (double) 1.0;
+          //        *((double*)ostack)++ = (double) 1.0;
+          neoDouble = (double *)ostack;
+        *neoDouble = (double)1.0;
+        neoDouble++;
+        ostack = (u4 *)neoDouble;
         pc += 1;
         DISPATCH(pc)
 
     DEF_OPC(OPC_LCONST_1)
-        *((u8*)ostack)++ = 1;
+          //        *((u8*)ostack)++ = 1;
+          neoU8 = (u8 *)ostack;
+        *neoU8 = 1;
+        neoU8++;
+        ostack = neoU8;
         pc += 1;
         DISPATCH(pc)
 
@@ -407,7 +454,11 @@ unused:
         DISPATCH(pc)
 
     DEF_OPC(OPC_LDC2_W)
-        *((u8*)ostack)++ = CP_LONG(cp, CP_DINDEX(pc));
+          //        *((u8*)ostack)++ = CP_LONG(cp, CP_DINDEX(pc));
+          neoU8 = (u8 *)ostack;
+        *neoU8 =  CP_LONG(cp, CP_DINDEX(pc));
+        neoU8++;
+        ostack = (u4 *)neoU8;
         pc += 3;
         DISPATCH(pc)
 
@@ -420,7 +471,11 @@ unused:
 
     DEF_OPC(OPC_LLOAD)
     DEF_OPC(OPC_DLOAD)
-	*((u8*)ostack)++ = *(u8*)(&lvars[CP_SINDEX(pc)]);
+          //	*((u8*)ostack)++ = *(u8*)(&lvars[CP_SINDEX(pc)]);
+          neoU8 = (u8 *)ostack;
+        *neoU8 = *(u8*)(&lvars[CP_SINDEX(pc)]);
+        neoU8++;
+        ostack = neoU8;
         pc += 2;
         DISPATCH(pc)
 
@@ -466,25 +521,43 @@ unused:
 
     DEF_OPC(OPC_LLOAD_0)
     DEF_OPC(OPC_DLOAD_0)
-	*((u8*)ostack)++ = *(u8*)(&lvars[0]);
+          //	*((u8*)ostack)++ = *(u8*)(&lvars[0]);
+          neoU8 = (u8 *)ostack;
+        *neoU8 =  *(u8*)(&lvars[0]);
+        neoU8++;
+        ostack = neoU8;
+          
         pc += 1;
         DISPATCH(pc)
 
     DEF_OPC(OPC_LLOAD_1)
     DEF_OPC(OPC_DLOAD_1)
-	*((u8*)ostack)++ = *(u8*)(&lvars[1]);
+          //	*((u8*)ostack)++ = *(u8*)(&lvars[1]);
+          neoU8 = ostack;
+          *neoU8 = *(u8*)(&lvars[1]);
+          neoU8++;
+          ostack = neoU8;
         pc += 1;
         DISPATCH(pc)
 
     DEF_OPC(OPC_LLOAD_2)
     DEF_OPC(OPC_DLOAD_2)
-	*((u8*)ostack)++ = *(u8*)(&lvars[2]);
+          //	*((u8*)ostack)++ = *(u8*)(&lvars[2]);
+          neoU8 = ostack;
+          *neoU8 = *(u8*)(&lvars[2]);
+          neoU8++;
+          ostack = neoU8;
+          
         pc += 1;
         DISPATCH(pc)
 
     DEF_OPC(OPC_LLOAD_3)
     DEF_OPC(OPC_DLOAD_3)
-	*((u8*)ostack)++ = *(u8*)(&lvars[3]);
+          //	*((u8*)ostack)++ = *(u8*)(&lvars[3]);
+          neoU8 = ostack;
+        *neoU8 =  *(u8*)(&lvars[3]);
+        neoU8++;
+        ostack = neoU8;
         pc += 1;
         DISPATCH(pc)
 
@@ -508,7 +581,12 @@ unused:
 
     DEF_OPC(OPC_LSTORE)
     DEF_OPC(OPC_DSTORE)
-	*(u8*)(&lvars[CP_SINDEX(pc)]) = *--((u8*)ostack);
+      //	*(u8*)(&lvars[CP_SINDEX(pc)]) = *--((u8*)ostack);
+      neoU8 = ostack;
+    neoU8--;
+    *(u8*)(&lvars[CP_SINDEX(pc)]) = *neoU8;
+    ostack = neoU8;
+    
         pc += 2;
         DISPATCH(pc)
 
@@ -549,25 +627,44 @@ unused:
 
     DEF_OPC(OPC_LSTORE_0)
     DEF_OPC(OPC_DSTORE_0)
-        *(u8*)(&lvars[0]) = *--((u8*)ostack);
+          //        *(u8*)(&lvars[0]) = *--((u8*)ostack);
+          neoU8 = ostack;
+        neoU8--;
+        *(u8*)(&lvars[0]) = *neoU8;
+        ostack = neoU8;
         pc += 1;
         DISPATCH(pc)
 
     DEF_OPC(OPC_LSTORE_1)
     DEF_OPC(OPC_DSTORE_1)
-        *(u8*)(&lvars[1]) = *--((u8*)ostack);
+          // *(u8*)(&lvars[1]) = *--((u8*)ostack);
+        neoU8 = ostack;
+        neoU8--;
+        *(u8*)(&lvars[1]) = *neoU8;
+        ostack = neoU8;
+        
         pc += 1;
         DISPATCH(pc)
 
     DEF_OPC(OPC_LSTORE_2)
     DEF_OPC(OPC_DSTORE_2)
-        *(u8*)(&lvars[2]) = *--((u8*)ostack);
+          // *(u8*)(&lvars[2]) = *--((u8*)ostack);
+          neoU8 = ostack;
+        neoU8--;
+        *(u8*)(&lvars[2]) = *neoU8;
+        ostack = neoU8;
+        
         pc += 1;
         DISPATCH(pc)
 
     DEF_OPC(OPC_LSTORE_3)
     DEF_OPC(OPC_DSTORE_3)
-        *(u8*)(&lvars[3]) = *--((u8*)ostack);
+          //        *(u8*)(&lvars[3]) = *--((u8*)ostack);
+          neoU8 = ostack;
+        neoU8--;
+        *(u8*)(&lvars[3]) = *neoU8;
+        ostack = neoU8;
+        
         pc += 1;
         DISPATCH(pc)
 
@@ -597,10 +694,14 @@ unused:
         pc += 1;
         DISPATCH(pc)
 
-    DEF_OPC(OPC_DUP)
-        *ostack++ = ostack[-1];
+    DEF_OPC(OPC_DUP) {
+      u4 word1 = ostack[-1];
+      *ostack++ = word1;
+       // *ostack++ = ostack[-1];
+
         pc += 1;
         DISPATCH(pc)
+    }
 
     DEF_OPC(OPC_DUP_X1) {
         u4 word1 = ostack[-1];
@@ -625,7 +726,12 @@ unused:
     }
 
     DEF_OPC(OPC_DUP2)
-        *((u8*)ostack)++ = ((u8*)ostack)[-1];
+      //    *((u8*)ostack)++ = ((u8*)ostack)[-1];
+      neoU8 = ostack;
+    *neoU8 =  ((u8*)ostack)[-1];
+    neoU8++;
+    ostack = neoU8;
+    
         pc += 1;
         DISPATCH(pc)
 
@@ -726,19 +832,41 @@ unused:
         BINARY_OP(long long, %, ostack, pc);
 
     DEF_OPC(OPC_FREM) {
-        float v2 = *--((float *)ostack);
-        float v1 = *--((float *)ostack);
+      //        float v2 = *--((float *)ostack);
+      // float v1 = *--((float *)ostack);
+      //      *((float *)ostack)++ = fmod(v1, v2);
 
-        *((float *)ostack)++ = fmod(v1, v2);
+        neoFloat = ostack;
+        neoFloat--;
+        float v2 = *neoFloat;
+        neoFloat--;
+        float v1 = *neoFloat;
+        *neoFloat = fmod(v1, v2);
+        neoFloat++;
+        ostack = neoFloat;
+        
+        
+
+       
         pc += 1;
         DISPATCH(pc)
     }
 
     DEF_OPC(OPC_DREM) {
-        double v2 = *--((double *)ostack);
-        double v1 = *--((double *)ostack);
+        /* double v2 = *--((double *)ostack); */
+        /* double v1 = *--((double *)ostack); */
 
-        *((double *)ostack)++ = fmod(v1, v2);
+        /* *((double *)ostack)++ = fmod(v1, v2); */
+
+      neoDouble = ostack;
+      neoDouble--;
+      double v2 = *neoDouble;
+      neoDouble--;
+      double v1 = *neoDouble;
+      *neoDouble = fmod(v1, v2);
+      neoDouble++;
+      ostack = neoDouble;
+      
         pc += 1;
         DISPATCH(pc)
     }
@@ -960,7 +1088,14 @@ unused:
 
     DEF_OPC(OPC_LRETURN)
     DEF_OPC(OPC_DRETURN)
-	*((u8*)lvars)++ = *(--(u8*)ostack);
+      neoU8 = ostack;
+    neoU8--;
+    neoU82 = lvars;
+    *neoU8 = neoU8;
+    ostack = neoU8;
+    neoU82++;
+    lvars = neoU82;
+	//*((u8*)lvars)++ = *(--(u8*)ostack);
         goto methodReturn;
 
     DEF_OPC(OPC_RETURN)
@@ -1098,7 +1233,12 @@ unused:
         Object *o = (Object *)*--ostack;
 	NULL_POINTER_CHECK(o);
 		
-        *((u8*)ostack)++ = *(u8*)(&(INST_DATA(o)[pc[1]]));
+        //        *((u8*)ostack)++ = *(u8*)(&(INST_DATA(o)[pc[1]]));
+        neoU8 = ostack;
+        *neoU8 = *(u8*)(&(INST_DATA(o)[pc[1]]));
+        neoU8++;
+        ostack = neoU8;
+        
         pc += 3;
         DISPATCH(pc)
     }
@@ -1419,7 +1559,11 @@ unused:
 
             case OPC_LLOAD:
             case OPC_DLOAD:
-                *((u8*)ostack)++ = *(u8*)(&lvars[CP_DINDEX((pc+1))]);
+              //*((u8*)ostack)++ = *(u8*)(&lvars[CP_DINDEX((pc+1))]);
+              neoU8 = ostack;
+              *neoU8 = *(u8*)(&lvars[CP_DINDEX((pc+1))]);
+              neoU8++;
+              ostack = neoU8;
                 pc += 4;
 		break;
 
@@ -1432,7 +1576,11 @@ unused:
 
             case OPC_LSTORE:
             case OPC_DSTORE:
-                *(u8*)(&lvars[CP_DINDEX((pc+1))]) = *--((u8*)ostack);
+                // *(u8*)(&lvars[CP_DINDEX((pc+1))]) = *--((u8*)ostack);
+              neoU8 = ostack;
+              neoU8--;
+              *(u8*)(&lvars[CP_DINDEX((pc+1))]) = *neoU8;
+              ostack = neoU8;
                 pc += 4;
 		break;
 

@@ -103,10 +103,14 @@ Object *invoke(Object *ob, Class *class, MethodBlock *mb, Object *arg_array) {
     while(*++sig != ')')
         switch(*sig) {
             case 'J':
-            case 'D':
-                *((u8*)sp)++ = *(u8*)(INST_DATA(*args++));
+	case 'D':{
+	  //*((u8*)sp)++ = *(u8*)(INST_DATA(*args++));
+	  u8 *temp = (u8 *)sp;
+	  *temp = *(u8*)(INST_DATA(*args++));
+	  temp++;
+	  sp = temp;
                 break;
-
+	}
             case 'Z':
             case 'B':
             case 'C':

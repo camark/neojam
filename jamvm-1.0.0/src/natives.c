@@ -171,17 +171,29 @@ u4 *identityHashCode(Class *class, MethodBlock *mb, u4 *ostack) {
 /* java.lang.Runtime */
 
 u4 *freeMemory(Class *class, MethodBlock *mb, u4 *ostack) {
-    *((u8*)ostack)++ = (u8) freeHeapMem();
+  u8 *temp = (u8 *)ostack;
+  *temp =  (u8) freeHeapMem();
+  temp++;
+  ostack = temp;
+  //*((u8*)ostack)++ = (u8) freeHeapMem();
     return ostack;
 }
 
 u4 *totalMemory(Class *class, MethodBlock *mb, u4 *ostack) {
-    *((u8*)ostack)++ = (u8) totalHeapMem();
+  //*((u8*)ostack)++ = (u8) totalHeapMem();
+   u8 *temp = (u8 *)ostack;
+  *temp =  (u8) freeHeapMem();
+  temp++;
+  ostack = temp;
     return ostack;
 }
 
 u4 *maxMemory(Class *class, MethodBlock *mb, u4 *ostack) {
-    *((u8*)ostack)++ = (u8) maxHeapMem();
+  //*((u8*)ostack)++ = (u8) maxHeapMem();
+     u8 *temp = (u8 *)ostack;
+  *temp =  (u8) freeHeapMem();
+  temp++;
+  ostack = temp;
     return ostack;
 }
 

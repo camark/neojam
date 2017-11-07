@@ -26,7 +26,16 @@
 #define VA_DOUBLE(args, sp)  *(u8*)sp = va_arg(args, u8); sp+=2
 #define VA_SINGLE(args, sp)  *sp++ = va_arg(args, u4)
 
-#define JA_DOUBLE(args, sp)  *((u8*)sp)++ = *args++
+#define JA_DOUBLE(args, sp) *((u8*)sp)++ = *args++
+
+#define JA_DOUBLE_new(args, sp)  \
+  do{			     \
+    u8 *temp = (u8 *)sp;     \
+    *temp = *args++;	     \
+    temp++;		     \
+    sp = temp;		     \
+  }while(0)
+
 #define JA_SINGLE(args, sp)  *sp++ = *(u4*)args; args++
 
 void *executeMethodArgs(Object *ob, Class *class, MethodBlock *mb, ...) {
@@ -87,7 +96,32 @@ void *executeMethodList(Object *ob, Class *class, MethodBlock *mb, u8 *jargs) {
     if(ob)
         *sp++ = (u4) ob; /* push receiver first */
 
-    SCAN_SIG(sig, JA_DOUBLE(jargs, sp), JA_SINGLE(jargs, sp))
+    //SCAN_SIG(sig, JA_DOUBLE(jargs, sp), JA_SINGLE(jargs, sp))
+    sig++; 
+    while(*sig != ')') { 
+      if((*sig == 'J') || (*sig == 'D')) { 
+	//*((u8*)sp)++ = *jargs++; 
+	u8 *temp = (u8 *)sp;
+	*temp = *jargs++;
+	temp++;
+	sp = temp;
+
+	sig++; 
+      } 
+      else { 
+	*sp++ = *(u4*)jargs; 
+	jargs++; 
+	if(*sig == '[') 
+	  for(sig++; *sig == '['; sig++)
+	    ; 
+	if(*sig == 'L') 
+	  while(*sig++ != ';')
+	    ; 
+	else 
+	  sig++; 
+      } 
+    } 
+    sig++;
 
     if(mb->access_flags & ACC_SYNCHRONIZED)
         objectLock(ob ? ob : (Object*)mb->class);

@@ -139,7 +139,7 @@ void initialiseAlloc(int min, int max, int verbose) {
     char *mem = (char*)mmap(0, max, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
 #endif
 
-    if((int)mem <= 0) {
+    if((int)mem == 0) {
         printf("Couldn't allocate the heap.  Aborting.\n");
 	exit(0);
     }

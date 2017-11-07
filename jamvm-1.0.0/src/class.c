@@ -174,7 +174,9 @@ Class *defineClass(char *data, int offset, int len, Object *class_loader) {
                buff[length] = '\0';
                ptr += length;
 
-               CP_INFO(constant_pool,i) = (u4)utf8 = findUtf8String(buff);
+               //CP_INFO(constant_pool,i) = (u4)utf8 = findUtf8String(buff);
+               utf8 = findUtf8String(buff);
+	       CP_INFO(constant_pool,i) = (u4)utf8;
 
                if(utf8 != buff)
                    free(buff);

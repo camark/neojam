@@ -24,7 +24,8 @@
     Frame *dummy = (Frame *)(last->ostack+last->mb->max_stack); \
     Frame *new_frame;                                           \
                                                                 \
-    ret = (void*) sp = (u4*)(dummy+1);                          \
+    sp = (u4*)(dummy+1);					\
+    ret = sp;							\
     new_frame = (Frame *)(sp + mb->max_locals);                 \
                                                                 \
     dummy->mb = NULL;                                           \

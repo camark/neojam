@@ -34,25 +34,64 @@ u4 *callJNIMethod(void *env, Class *class, char *sig, int extra, u4 *ostack, uns
     args[0] = (u4)env;
     args[1] = class ? (u4)class : *opntr++;
 
-    SCAN_SIG(sig, *((u8*)apntr)++ = *((u8*)opntr)++, *apntr++ = *opntr++);
+    //SCAN_SIG(sig, *((u8*)apntr)++ = *((u8*)opntr)++, *apntr++ = *opntr++);
+     sig++; 
+     while(*sig != ')') { 
+       if((*sig == 'J') || (*sig == 'D')) { 
+	 //*((u8*)apntr)++ = *((u8*)opntr)++; 
+	 u8 *left = (u8 *)apntr;
+	 u8 *right = (u8 *)opntr;
+	 
+	 *left = *right;
+	 left++;
+	 right++;
+	 apntr = left;
+	 opntr = right;
+	 sig++; 
+       } 
+       else { 
+	 *apntr++ = *opntr++; 
+	 if(*sig == '[') 
+	   for(sig++; *sig == '['; sig++)
+	     ; 
+	 if(*sig == 'L') 
+	   while(*sig++ != ';')
+	     ; 
+	 else 
+	   sig++; 
+       } 
+     } 
+     sig++;;
 
-    switch(*sig) {
+     switch(*sig) {
         case 'V':
             (*(void (*)())f)();
             break;
 
-        case 'D':
-            *((double*)ostack)++ = (*(double (*)())f)();
-            break;
-
-        case 'F':
-            *((float*)ostack)++ = (*(float (*)())f)();
-            break;
-
-        case 'J':
-            *((long long*)ostack)++ = (*(long long (*)())f)();
-            break;
-
+    case 'D':{
+      //*((double*)ostack)++ = (*(double (*)())f)();
+      double *temp = (double *)ostack;
+      *temp = (*(double (*)())f)();
+      temp++;
+      ostack = (u4 *)temp;
+      break;
+    }
+    case 'F':{
+      //*((float*)ostack)++ = (*(float (*)())f)();
+       float *temp = (float *)ostack;
+      *temp = (*(float (*)())f)();
+      temp++;
+      ostack = (u4 *)temp;
+      break;
+    }
+    case 'J':{
+      //*((long long*)ostack)++ = (*(long long (*)())f)();
+      long long *temp = (long long *)ostack;
+      *temp = (*(long long (*)())f)();
+      temp++;
+      ostack = (u4 *)temp;
+      break;
+    }
         default:
             *ostack++ = (*(u4 (*)())f)();
             break;
