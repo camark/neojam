@@ -1,0 +1,107 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(src/jam.c)
+AM_INIT_AUTOMAKE(jamvm, 1.0.0)
+
+AC_ARG_ENABLE(tracegc,
+    [  --enable-tracegc	add gc tracing (for debugging)],
+    [if test "$enableval" != no; then
+        AC_DEFINE(TRACEGC)
+    fi],)
+
+AC_ARG_ENABLE(tracealloc,
+    [  --enable-tracealloc	add object allocation tracing (for debugging)],
+    [if test "$enableval" != no; then
+        AC_DEFINE(TRACEALLOC)
+    fi],)
+
+AC_ARG_ENABLE(tracefnlz,
+    [  --enable-tracefnlz	add object finalisation tracing (for debugging)],
+    [if test "$enableval" != no; then
+        AC_DEFINE(TRACEFNLZ)
+    fi],)
+
+AC_ARG_ENABLE(tracedll,
+    [  --enable-tracedll	add library loading/lookup tracing (for debugging)],
+    [if test "$enableval" != no; then
+        AC_DEFINE(TRACEDLL)
+    fi],)
+
+AC_ARG_ENABLE(tracelock,
+    [  --enable-tracelock	add object locking tracing (for debugging)],
+    [if test "$enableval" != no; then
+        AC_DEFINE(TRACELOCK)
+    fi],)
+
+AC_ARG_ENABLE(tracethread,
+    [  --enable-tracethread	add thread creation tracing (for debugging)],
+    [if test "$enableval" != no; then
+        AC_DEFINE(TRACETHREAD)
+    fi],)
+
+AC_ARG_ENABLE(trace,
+    [  --enable-trace	add all tracing (for debugging)],
+    [if test "$enableval" != no; then
+        AC_DEFINE(TRACEGC)
+        AC_DEFINE(TRACEALLOC)
+        AC_DEFINE(TRACEFNLZ)
+        AC_DEFINE(TRACEDLL)
+        AC_DEFINE(TRACELOCK)
+        AC_DEFINE(TRACETHREAD)
+    fi],)
+
+AC_ARG_WITH(int,
+    [  --with-int={switch|threaded}	compile switch-based or threaded interpreter
+				(default threaded)],,
+    [with_int=threaded])
+
+case "$with_int" in
+switch) ;;
+threaded) AC_DEFINE(THREADED) ;;
+*) AC_MSG_ERROR(--with-int value \"$with_int\" not recognised) ;;
+esac
+
+AC_ARG_WITH(classpath_install_dir,
+    [  --classpath_install_dir=<dir>	installation directory of GNU classpath
+				(default /usr/local/classpath)],,
+    [with_classpath_install_dir=/usr/local/classpath])
+
+AC_SUBST(with_classpath_install_dir)
+
+dnl Checks for programs.
+AC_PROG_CC
+AC_PROG_RANLIB
+
+AM_PROG_AS
+
+dnl Checks for libraries.
+
+AC_CHECK_LIB(pthread,pthread_self,echo -n,echo ***ERROR: libpthread is missing; exit 1)
+AC_CHECK_LIB(dl,dlopen,echo -n,echo ***ERROR: libdl is missing; exit 1)
+AC_CHECK_LIB(m,fmod,echo -n,echo ***ERROR: libm is missing; exit 1)
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS(sys/time.h unistd.h)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_HEADER_TIME
+
+dnl Checks for library functions.
+AC_FUNC_ALLOCA
+AC_FUNC_MMAP
+AC_CHECK_FUNCS(gettimeofday strtol)
+
+AC_CANONICAL_HOST
+
+case "$host_cpu" in
+i[[456]]86) host_cpu=i386 ;;
+powerpc) ;;
+*) AC_MSG_ERROR($host_cpu not supported) ;;
+esac
+
+arch=$host_cpu
+AC_SUBST(arch)
+
+AC_LINK_FILES(src/$host_cpu/lock_md.h, src/lock_md.h)
+AC_OUTPUT(Makefile src/Makefile src/i386/Makefile src/powerpc/Makefile)

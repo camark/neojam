@@ -1,0 +1,132 @@
+JamVM 1.0.0
+===========
+
+Welcome to the first release of JamVM!
+
+JamVM is a new Java Virtual Machine which conforms to the JVM
+specification version 2 (blue book).  In comparison to most other
+VM's (free and commercial) it is extremely small, with a stripped
+executable on PowerPC of only ~90K, and Intel 70K.  However, unlike
+other small VMs (e.g. KVM) it is designed to support the full
+specification, and includes support for object finalisation and the
+Java Native Interface (JNI).  
+
+Supported Architectures
+=======================
+
+JamVM currently only includes an interpreter (keeps it small).  This
+means it is easy to port to new architectures as most of the code
+is written in C.  So far, JamVM has been built and tested on :
+
+- PowerPC: my main platform, so this is the most tested.
+- i386: built and tested on i586 and i686 (Pentium III).  At least
+        an i486 is needed because JamVM uses the cmpxchg instruction,
+        which was first introduced on the i486.
+
+JamVM has only been built and tested on Linux.  It may work on other
+Unix systems with the above processors "as is" as long as they support
+Posix threads, but I haven't tested.
+
+A port is planned to the ARM (iPAQ) in the very near future, and a JIT
+is on the horizon!
+
+Class Libraries
+===============
+
+JamVM is designed to use the GNU classpath Java class library.  A number
+of minor modifications, mostly within the VM porting layer are needed,
+so a modified library is provided.  This is based on GNU Classpath version
+0.04.  These modifications will be fed back to the GNU classpath maintainers
+as my aim is for JamVM to work with the current version of Classpath
+from CVS.
+
+Note, JamVM will not work with the class library from Sun or IBM's Virtual
+Machines.
+
+Building and Installing
+=======================
+
+Please see the INSTALL file for full instructions.
+
+Running
+=======
+
+You don't need to setup any environment variables to run JamVM, as installing
+JamVM puts a small shell script into /usr/local/bin (the default location
+can be changed, see INSTALL).  Therefore, as long as you have /usr/local/bin
+in your path, you should be able to simply run `jamvm'.
+
+CLASSPATH and LD_LIBRARY_PATH variables
+---------------------------------------
+
+The `jamvm' shell script takes care of setting these variables to the GNU
+Classpath libraries, and also includes the current directory ('.').  Therefore,
+you shouldn't need to set these up to run Java programs from the current
+directory.  However, you can set them up to point to other user classes
+and shared libraries.  These will be appended before running the JamVM
+executable. 
+
+Testing
+=======
+
+Currently JamVM has been used to run fairly major command-line programs including
+Javac, SPECJvm 98 benchmark suite and jBYTEmark.  Unfortunately classpath's AWT
+support is at an early stage so JamVM can't be used for graphical applications,
+but this is independent of the VM, so it will improve in the future as
+classpath matures.
+
+I welcome feedback of any kind, e.g. bug reports, suggestions, etc.  See my
+email address at the bottom.
+
+JamVM "Features"
+================
+
+For those interested in the design of virtual machines, JamVM includes a number
+of optimisations to improve speed and reduce foot-print.  A list, in no
+particular order, is given below.
+
+- Uses native threading (posix threads).  Full thread implementation
+  including Thread.interrupt()
+
+- Object references are direct pointers (i.e. no handles)
+
+- Supports class loaders
+
+- Efficient thin locks for fast locking in uncontended cases (the
+  majority of locking) without using spin-locking
+
+- Two word object header to minimise heap overhead (lock word and
+  class pointer)
+
+- Execution engine supports basic switched interpreter and threaded
+  intepreter, to minimise dispatch overhead (requires gcc value labels)
+
+- Stop-the-world mark and sweep garbage collector
+
+- Thread suspension uses signals to reduce supend latency and improve
+  performance (no suspension checks during normal execution)
+
+- Full object finalisation support within the garbage collector
+  (with finaliser thread)
+
+- Garbage collector can run synchronously or asynchronously within its
+  own thread
+
+- String constants within class files are stored in hash table to
+  minimise class data overhead (string constants shared between all
+  classes)
+
+- Supports JNI and dynamic loading for use with standard libraries
+
+- Uses its own lightweight native interface for internal native methods
+  without overhead of JNI 
+
+- JavaVM is written in C, with a small amount of platform dependent
+  assembler, and is easily portable to other architectures.  Currently
+  JavaVM supports PowerPC and Intel - port in progress to ARM (iPAQ)
+
+
+That's it!
+
+Robert Lougher <rob@lougher.demon.co.uk>
+10th March 2003.
